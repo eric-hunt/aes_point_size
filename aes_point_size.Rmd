@@ -77,9 +77,7 @@ ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
 p1 <- ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
   ggplot2::geom_point(show.legend = FALSE) +
   ggplot2::scale_size_area(max_size = (2 * sqrt(128))) +
-  ggplot2::scale_x_continuous(limits = c(0, 8)) +
-  ggplot2::scale_y_continuous(limits = c(0, 8)) +
-  ggrepel::geom_label_repel(aes(label = size), size = 4) +
+  ggplot2::lims(x = c(0,8), y = c(0, 8)) +
   ggplot2::coord_fixed()
 ```
 
@@ -89,9 +87,7 @@ p1 <- ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
 p2 <- ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
   ggplot2::geom_point(show.legend = FALSE) +
   ggplot2::scale_size_continuous(range = c(4, 2 * sqrt(128))) +
-  ggplot2::scale_x_continuous(limits = c(0, 8)) +
-  ggplot2::scale_y_continuous(limits = c(0, 8)) +
-  ggrepel::geom_label_repel(aes(label = size), size = 4) +
+  ggplot2::lims(x = c(0,8), y = c(0, 8)) +
   ggplot2::coord_fixed()
 ```
 
@@ -99,5 +95,27 @@ p2 <- ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
 
 ```{r, warning=FALSE}
 cowplot::plot_grid(p1, p2, nrow = 1, labels = c("Plot 1", "Plot 2"))
+```
+
+```{r}
+
+tibble::tibble(
+  size = c(0, 32, 1, 32),
+  area = c(0, 2*sqrt(128), 4, 2*sqrt(128)),
+  group = c(rep("p1", 2), rep("p2", 2))
+) |> 
+  tidyr::nest(data = -c(group)) |> 
+  dplyr::mutate(model = purrr::map(data, ~ lm(area ~ size, data = .x))) |> 
+  {function(x) {
+    purrr::walk(x$model, ~print(broom::tidy(.x)))
+    return(x)
+  }}() |> 
+  tidyr::unnest(data) |> 
+  ggplot2::ggplot(aes(x = size, y = area)) +
+  ggplot2::geom_line(aes(color = group)) +
+  ggplot2::scale_x_continuous(limits = c(0, 32), expand = c(0, 0)) +
+  ggplot2::geom_label(aes(x = 10, y = c(5, 5, 11, 11), label = purrr::map_dbl(.data$model, ~broom::tidy(.x) |> dplyr::slice(2) |>  dplyr::pull(estimate) |> round(digits = 6)))) +
+  ggplot2::coord_fixed()
+
 ```
 
