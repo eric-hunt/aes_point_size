@@ -1,0 +1,103 @@
+---
+title: "Controlling & Adjusting Point Size Aesthetic"
+output:
+  html_document:
+    highlight: breezedark
+    theme:
+      bootswatch: solar
+      version: 4
+      base_font: 'Open Sans'
+      heading_font: 'Oswald'
+      code_font: 'JetBrains Mono'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(
+  root.dir = normalizePath("/Users/hunt/GitHub/aes_point_size/")
+)
+
+library(bslib)
+library(showtext)
+  sysfonts::font_add(
+    "Open Sans",
+    "/Users/hunt/Library/Fonts/OpenSans-VariableFont_wdth,wght.ttf"
+  )
+  sysfonts::font_add(
+    "Oswald",
+    "/Users/hunt/Library/Fonts/Oswald-VariableFont_wght.ttf"
+  )
+  sysfonts::font_add(
+    "JetBrains Mono",
+    "/Users/hunt/Library/Fonts/JetBrainsMono-VariableFont_wght.ttf"
+  )
+  showtext::showtext_auto()
+
+library(printr)
+  
+library(tidyverse)
+
+# Default ggplot theme
+theme_set(
+ ggplot2::theme_bw(base_family = "Open Sans") +
+   ggplot2::theme(
+     title = ggplot2::element_text(family = "Oswald"),
+     axis.text = ggplot2::element_text(face = "bold"),
+     panel.grid = ggplot2::element_blank()
+   )
+)
+```
+
+
+## Trajen's cool fake data
+
+```{r}
+test_data <- tibble::tibble(
+  x = c(1:6),
+  y = c(1,4,5,2,3,6),
+  size = c(1,2,4,8,16,32)
+)
+test_data
+```
+
+## Trajen's not so cool fake plot
+
+```{r}
+ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
+  ggplot2::geom_point(show.legend = FALSE) +
+  ggplot2::scale_size_area(max_size = 30) +
+  ggplot2::scale_x_continuous(limits = c(0, 8)) +
+  ggplot2::scale_y_continuous(limits = c(0, 8)) +
+  ggrepel::geom_label_repel(aes(label = size), size = 4) +
+  ggplot2::coord_fixed()
+```
+
+### First approach
+
+```{r}
+p1 <- ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
+  ggplot2::geom_point(show.legend = FALSE) +
+  ggplot2::scale_size_area(max_size = (2 * sqrt(128))) +
+  ggplot2::scale_x_continuous(limits = c(0, 8)) +
+  ggplot2::scale_y_continuous(limits = c(0, 8)) +
+  ggrepel::geom_label_repel(aes(label = size), size = 4) +
+  ggplot2::coord_fixed()
+```
+
+### Second approach
+
+```{r}
+p2 <- ggplot2::ggplot(test_data, aes(x = x, y = y, size = size)) +
+  ggplot2::geom_point(show.legend = FALSE) +
+  ggplot2::scale_size_continuous(range = c(4, 2 * sqrt(128))) +
+  ggplot2::scale_x_continuous(limits = c(0, 8)) +
+  ggplot2::scale_y_continuous(limits = c(0, 8)) +
+  ggrepel::geom_label_repel(aes(label = size), size = 4) +
+  ggplot2::coord_fixed()
+```
+
+### Grid alignment
+
+```{r, warning=FALSE}
+cowplot::plot_grid(p1, p2, nrow = 1, labels = c("Plot 1", "Plot 2"))
+```
+
